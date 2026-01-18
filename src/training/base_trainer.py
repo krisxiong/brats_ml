@@ -84,6 +84,7 @@ class BaseTrainer(ABC):
         self.history = {
             'train_loss': [],
             'train_metrics': [],
+            'train_dice': [],
             'val_metrics': [],
             'learning_rates': []
         }

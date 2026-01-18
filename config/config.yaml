@@ -1,19 +1,17 @@
+# BraTS MAML训练配置
+
+# ============ 数据配置 ============
 data:
   data_root: 'data'
   tasks:
     - 'BraTS_Task1'
-
     # - 'MyBraTS'  # 添加你的测试数据
-
-  # Crop策略（关键配置）
   crop_size: [224, 224, 128]  # 推荐大crop
   crop_strategy: 'hybrid'     # hybrid | smart_random | random
-
-  # 数据处理
   normalize: true
   augment_type: 'domain'      # none | domain
-# 数据配置
 
+# ============ 增强配置 ============
 augmentation:
   domain:
     brightness_range: [0.85, 1.15]
@@ -27,86 +25,70 @@ model:
   out_channels: 3             # WT, TC, ET
   base_channels: 24           # 16(轻量) | 24(中) | 32(标准) | 64(大型)
 
-
 # ============ MAML配置 ============
 maml:
   algorithm: 'first_order'    # first_order | second_order
   inner_lr: 0.01              # 内循环学习率
   outer_lr: 0.001             # 外循环学习率
-  inner_steps: 3              # 内循环步数（3步即可，不要太多）
-  l2_reg: 0.001               # L2正则化（防止过拟合）
-
+  inner_steps: 3              # 内循环步数
+  l2_reg: 0.001               # L2正则化
 
 # ============ 元学习配置 ============
 meta_learning:
   k_shot: 2                   # Support样本数
   k_query: 2                  # Query样本数
-  meta_batch_size: 1          # 元批次大小（3D通常为1）
-
+  meta_batch_size: 1          # 元批次大小
 
 # ============ 训练配置 ============
 training:
   num_epochs: 100
-  iterations_per_epoch: 50    # 每轮迭代次数
-
-  # 优化器
+  iterations_per_epoch: 50
+  
   optimizer: 'adam'
   weight_decay: 0.00001
-
-  # 学习率调度
+  
   lr_scheduler:
     type: 'reduce_on_plateau'
-    mode: 'max'               # 监控dice（越大越好）
+    mode: 'max'
     factor: 0.5
     patience: 15
-
-  # 早停
+  
   early_stopping:
     enabled: true
     patience: 30
     min_delta: 0.0001
-
-  # 显存优化
-  use_amp: false              # 混合精度训练（可节省50%显存）
-  gradient_accumulation: 1    # 梯度累积
-  max_grad_norm: 1.0          # 梯度裁剪
-
+  
+  use_amp: false
+  gradient_accumulation: 1
+  max_grad_norm: 1.0
 
 # ============ 验证配置 ============
 validation:
   enabled: true
-  interval: 2                 # 每5个epoch验证一次
-  num_val_tasks: 10           # 验证任务数
+  interval: 2
+  num_val_tasks: 10
+  val_tasks: null  # 指定验证任务
 
-
-# ============ 保存配置 ============
+# ============ 检查点配置 ============
 checkpoint:
   save_dir: 'checkpoints_12251058'
-  save_interval: 10           # 每10个epoch保存
+  save_interval: 10
   save_best: true
-  keep_last_n: 3              # 保留最近3个checkpoint
-
+  keep_last_n: 3
 
 # ============ 日志配置 ============
 logging:
   log_dir: 'logs_12251058'
-  log_interval: 2             # 每5次迭代打印
-  tensorboard: true
+  log_interval: 2
+  tensorboard: false
   save_training_curves: true
-
 
 # ============ 测试配置 ============
 testing:
   checkpoint: 'checkpoints_12251058/best_model.pth'
   test_tasks:
-    - 'gulou_philips'               # 你的测试数据
+    - 'gulou_philips'
   verbose: false
-  # 测试时推理策略
-  inference:
-    mode: 'sliding_window'    # sliding_window | center_crop
-    overlap: 0.5              # 滑动窗口重叠率
-
-  # 输出
   save_predictions: true
   output_dir: 'results_0110_gulou_philips_depart'
   visualization: true
@@ -115,8 +97,9 @@ testing:
   adaptation_inner_steps: 30
   threshold: 0.5
   num_visualize: 20
+
 # ============ 硬件配置 ============
 hardware:
-  device: 'cuda'              # cuda | cpu
-  num_workers: 4              # 数据加载线程数
+  device: 'cuda'
+  num_workers: 4
   pin_memory: true

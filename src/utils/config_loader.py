@@ -1,93 +1,61 @@
 """
-配置文件加载模块
+配置文件加载模块 - 支持您原有的配置结构
 """
 
 import yaml
 import os
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
+import torch
 
-
-def load_config(config_path: str) -> Dict[str, Any]:
-    """
-    加载YAML配置文件
-
-    Args:
-        config_path: 配置文件路径
-
-    Returns:
-        配置字典
-    """
-    config_path = Path(config_path)
-
-    if not config_path.exists():
-        raise FileNotFoundError(f"配置文件不存在: {config_path}")
-
+def load_config(config_path):
+    """加载配置文件"""
     with open(config_path, 'r', encoding='utf-8') as f:
         config = yaml.safe_load(f)
 
     return config
 
 
-def print_config(config: Dict[str, Any]):
-    """
-    打印配置信息
+def setup_directories(config):
+    """创建必要的目录"""
+    dirs = [
+        config['checkpoint']['save_dir'],
+        config['logging']['log_dir'],
+        config['testing']['output_dir']
+    ]
+    for dir_path in dirs:
+        os.makedirs(dir_path, exist_ok=True)
 
-    Args:
-        config: 配置字典
-    """
+
+def print_config(config):
+    """打印配置信息"""
     print("\n" + "=" * 70)
     print("训练配置")
     print("=" * 70)
+    print(f"数据:")
+    print(f"  根目录: {config['data']['data_root']}")
+    print(f"  任务数: {len(config['data']['tasks'])}")
+    print(f"  Crop大小: {config['data']['crop_size']}")
+    print(f"  Crop策略: {config['data']['crop_strategy']}")
 
-    sections = [
-        ('数据', 'data'),
-        ('模型', 'model'),
-        ('MAML', 'maml'),
-        ('元学习', 'meta_learning'),
-        ('训练', 'training'),
-        ('验证', 'validation'),
-        ('检查点', 'checkpoint'),
-        ('日志', 'logging')
-    ]
+    print(f"\n模型:")
+    print(f"  架构: {config['model']['name']}")
+    print(f"  基础通道: {config['model']['base_channels']}")
 
-    for section_name, section_key in sections:
-        if section_key in config:
-            print(f"\n{section_name}:")
-            _print_section(config[section_key], indent=2)
+    print(f"\nMAML:")
+    print(f"  算法: {config['maml']['algorithm']}")
+    print(f"  Inner LR: {config['maml']['inner_lr']}")
+    print(f"  Outer LR: {config['maml']['outer_lr']}")
+    print(f"  Inner Steps: {config['maml']['inner_steps']}")
+
+    print(f"\n元学习:")
+    print(f"  K-shot: {config['meta_learning']['k_shot']}")
+    print(f"  K-query: {config['meta_learning']['k_query']}")
+    print(f"  Meta Batch: {config['meta_learning']['meta_batch_size']}")
+
+    print(f"\n训练:")
+    print(f"  Epochs: {config['training']['num_epochs']}")
+    print(f"  迭代/轮: {config['training']['iterations_per_epoch']}")
+    print(f"  混合精度: {config['training']['use_amp']}")
 
     print("=" * 70)
-
-
-def _print_section(section: Dict[str, Any], indent: int = 0):
-    """递归打印配置部分"""
-    indent_str = " " * indent
-
-    for key, value in section.items():
-        if isinstance(value, dict):
-            print(f"{indent_str}{key}:")
-            _print_section(value, indent + 2)
-        else:
-            print(f"{indent_str}{key}: {value}")
-
-
-def merge_configs(base_config: Dict[str, Any], override_config: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    合并配置（深度合并）
-
-    Args:
-        base_config: 基础配置
-        override_config: 覆盖配置
-
-    Returns:
-        合并后的配置
-    """
-    merged = base_config.copy()
-
-    for key, value in override_config.items():
-        if key in merged and isinstance(merged[key], dict) and isinstance(value, dict):
-            merged[key] = merge_configs(merged[key], value)
-        else:
-            merged[key] = value
-
-    return merged

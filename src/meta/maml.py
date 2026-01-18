@@ -4,6 +4,7 @@
 ✅ 防过拟合机制
 ✅ 更稳定的训练
 """
+from abc import ABC
 
 import torch
 import torch.nn as nn
@@ -11,14 +12,14 @@ import numpy as np
 from typing import Dict, List, Any
 from copy import deepcopy
 
-from .base_meta import BaseMetaLearner
+from base_meta import BaseMetaLearner
 from ..losses.segmentation_losses import SegmentationLoss
 from ..losses.meta_losses import MAMLLoss
 from ..metrics.dice_calculator import BraTSDiceCalculator
 from ..utils.gradient_utils import GradientUtils
 
 
-class FirstOrderMAML(BaseMetaLearner):
+class FirstOrderMAML(BaseMetaLearner, ABC):
     """
     ============ First-Order MAML ============
 
@@ -80,8 +81,7 @@ class FirstOrderMAML(BaseMetaLearner):
                 self.meta_optimizer,
                 mode='max',
                 factor=0.5,
-                patience=5,
-                verbose=True
+                patience=5
             )
         except TypeError:
             return torch.optim.lr_scheduler.ReduceLROnPlateau(

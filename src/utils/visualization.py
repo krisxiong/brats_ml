@@ -9,44 +9,69 @@ from typing import Dict, Any, List
 import os
 
 
-def plot_training_curves(history: Dict[str, Any], save_dir: str, filename: str = 'training_curves.png'):
-    """
-    绘制训练曲线
-
-    Args:
-        history: 训练历史字典
-        save_dir: 保存目录
-        filename: 保存文件名
-    """
-    if len(history.get('train_loss', [])) == 0:
-        print("没有训练数据可绘制")
-        return
-
+def plot_training_curves(history, save_dir):
+    """绘制训练曲线"""
     epochs = range(1, len(history['train_loss']) + 1)
 
     fig, axes = plt.subplots(2, 2, figsize=(12, 10))
 
-    # Loss曲线
-    _plot_loss_curve(axes[0, 0], epochs, history)
+    # Loss
+    axes[0, 0].plot(epochs, history['train_loss'], 'b-', linewidth=2, label='Train')
+    if 'val_loss' in history:
+        axes[0, 0].plot(epochs, history['val_loss'], 'r--', linewidth=2, label='Val')
+    axes[0, 0].set_title('Loss', fontsize=14, fontweight='bold')
+    axes[0, 0].set_xlabel('Epoch')
+    axes[0, 0].set_ylabel('Loss')
+    axes[0, 0].legend()
+    axes[0, 0].grid(True, alpha=0.3)
 
-    # Mean Dice曲线
-    _plot_dice_curve(axes[0, 1], epochs, history)
+    # Mean Dice
+    axes[0, 1].plot(epochs, history['train_dice'], 'b-', linewidth=2, label='Train')
+    if len(history['val_dice']) == len(epochs):
+        axes[0, 1].plot(epochs, history['val_dice'], 'r--', linewidth=2, label='Val')
 
-    # 各类别Dice曲线
-    _plot_per_class_dice(axes[1, 0], epochs, history)
+    axes[0, 1].set_title('Mean Dice', fontsize=14, fontweight='bold')
+    axes[0, 1].set_xlabel('Epoch')
+    axes[0, 1].set_ylabel('Dice')
+    axes[0, 1].legend()
+    axes[0, 1].grid(True, alpha=0.3)
 
-    # Support vs Query Dice曲线
-    _plot_support_vs_query(axes[1, 1], epochs, history)
+    # Per-class Dice
+    for i, (name, color) in enumerate(zip(['WT', 'TC', 'ET'], ['red', 'green', 'blue'])):
+        key = f'train_dice_{name.lower()}'
+        if key in history:
+            axes[1, 0].plot(epochs, history[key], color=color, linewidth=2,
+                          label=name, marker='o', markersize=3)
+    axes[1, 0].set_title('Per-Class Dice', fontsize=14, fontweight='bold')
+    axes[1, 0].set_xlabel('Epoch')
+    axes[1, 0].set_ylabel('Dice')
+    axes[1, 0].legend()
+    axes[1, 0].grid(True, alpha=0.3)
+
+    # Support vs Query Dice
+    if 'support_dice' in history:
+        axes[1, 1].plot(epochs, history['support_dice'], 'g-', linewidth=2,
+                       label='Support', marker='s', markersize=3)
+        axes[1, 1].plot(epochs, history['train_dice'], 'b-', linewidth=2,
+                       label='Query', marker='o', markersize=3)
+        axes[1, 1].set_title('Support vs Query Dice', fontsize=14, fontweight='bold')
+        axes[1, 1].set_xlabel('Epoch')
+        axes[1, 1].set_ylabel('Dice')
+        axes[1, 1].legend()
+        axes[1, 1].grid(True, alpha=0.3)
+
+        # 检查过拟合
+        if len(history['support_dice']) > 0 and len(history['train_dice']) > 0:
+            gap = np.array(history['support_dice']) - np.array(history['train_dice'])
+            if gap[-1] > 0.15:
+                axes[1, 1].text(0.5, 0.95, '⚠️ 可能过拟合',
+                              transform=axes[1, 1].transAxes,
+                              ha='center', va='top',
+                              bbox=dict(boxstyle='round', facecolor='yellow', alpha=0.5))
 
     plt.tight_layout()
-
-    # 保存图像
-    save_path = Path(save_dir) / filename
-    save_path.parent.mkdir(parents=True, exist_ok=True)
-    plt.savefig(str(save_path), dpi=150, bbox_inches='tight')
+    plt.savefig(os.path.join(save_dir, 'training_curves.png'), dpi=150)
     plt.close()
-
-    print(f"训练曲线已保存: {save_path}")
 
 
 def _plot_loss_curve(ax, epochs, history):

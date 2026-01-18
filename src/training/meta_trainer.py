@@ -13,9 +13,9 @@ from .base_trainer import BaseTrainer
 from ..utils.early_stopping import ImprovedEarlyStopping
 from ..utils.visualization import plot_training_curves
 from ..utils.memory_estimator import estimate_memory_requirements
-from ..meta_learners import FirstOrderMAML
-from ..data.datasets import MetaTaskSampler
-
+from ..meta.maml import FirstOrderMAML
+from ..data.datasets.task_sampler import MetaTaskSampler
+from ..model.Resnet import ResUNet
 
 class MAMLTrainer(BaseTrainer):
     """MAML训练器"""
@@ -46,7 +46,6 @@ class MAMLTrainer(BaseTrainer):
         print("=" * 70)
 
         # 导入模型类
-        from ..models.unet_3d import ResUNet
 
         # 创建模型
         model = ResUNet(
@@ -257,6 +256,7 @@ class MAMLTrainer(BaseTrainer):
         print("=" * 70)
 
         # 设置组件
+
         self.setup_model()
         self.setup_data()
         self.setup_early_stopping()
