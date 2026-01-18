@@ -1,0 +1,22 @@
+# 数据配置
+data:
+  root: "data"  # 数据根目录
+  tasks:
+    - 'BraTS_Task1'
+    - 'BraTS_Task2'
+    - 'BraTS_Task3'
+    # - 'MyBraTS'  # 添加你的测试数据
+
+
+  crop_size: [224, 224, 128]  # 推荐大crop
+  crop_strategy: 'hybrid'     # hybrid | smart_random | random
+
+meta_learning:
+  k_shot: 2
+  k_query: 2
+  
+augmentation:
+  domain:
+    brightness_range: [0.85, 1.15]
+    contrast_range: [0.9, 1.1]
+    noise_std_range: [0, 0.03]
